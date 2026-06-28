@@ -188,9 +188,13 @@ export default function App() {
             <div style={{ fontSize: '0.75rem', color: '#06b6d4', wordBreak: 'break-all', marginBottom: '0.4rem' }}>{API_BASE}</div>
             <button
               onClick={() => {
-                const customUrl = prompt('Enter your live Render Backend URL (e.g. https://your-app.onrender.com/api/v1):', API_BASE);
-                if (customUrl) {
-                  localStorage.setItem('KNOWLEDGEBRAIN_API_URL', customUrl);
+                const customUrl = prompt('Enter your Render Backend root domain (e.g. https://knowledgebrain-backend.onrender.com):', localStorage.getItem('KNOWLEDGEBRAIN_API_URL') || '');
+                if (customUrl !== null) {
+                  if (customUrl.trim() === '') {
+                    localStorage.removeItem('KNOWLEDGEBRAIN_API_URL');
+                  } else {
+                    localStorage.setItem('KNOWLEDGEBRAIN_API_URL', customUrl.trim());
+                  }
                   window.location.reload();
                 }
               }}
