@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Send, User, Sparkles, RefreshCw, Paperclip, Mic, MicOff, FileText, Cpu } from 'lucide-react';
+import { Bot, Send, User, Sparkles, RefreshCw, Paperclip, Mic, MicOff, FileText, Cpu, CheckCircle, Eye, X } from 'lucide-react';
 import { API_BASE } from '../config';
 
 export default function CopilotChat() {
@@ -8,6 +8,7 @@ export default function CopilotChat() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState(null);
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -27,7 +28,7 @@ export default function CopilotChat() {
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = true;
-      recognition.lang = 'en-US'; // Supports Hinglish / English
+      recognition.lang = 'en-US';
 
       recognition.onresult = (event) => {
         let transcript = '';
@@ -37,25 +38,20 @@ export default function CopilotChat() {
         setInputQuery(transcript);
       };
 
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
+      recognition.onend = () => setIsListening(false);
       recognition.onerror = (err) => {
         console.error('Speech recognition error:', err);
         setIsListening(false);
       };
-
       recognitionRef.current = recognition;
     }
   };
 
   const toggleVoiceRecognition = () => {
     if (!recognitionRef.current) {
-      alert('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
+      alert('Speech recognition is not supported in this browser.');
       return;
     }
-
     if (isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
@@ -81,6 +77,23 @@ export default function CopilotChat() {
     }
   };
 
+  const openDocViewer = async (docName) => {
+    try {
+      const res = await fetch(`${API_BASE}/documents`);
+      if (res.ok) {
+        const docs = await res.json();
+        const found = docs.find(d => d.filename === docName || docName.includes(d.filename));
+        if (found) {
+          setSelectedDoc(found);
+        } else if (docs.length > 0) {
+          setSelectedDoc(docs[0]);
+        }
+      }
+    } catch (e) {
+      console.error('Doc view error:', e);
+    }
+  };
+
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -102,7 +115,8 @@ export default function CopilotChat() {
           ...prev,
           {
             role: 'assistant',
-            content: `📄 Document Uploaded & Vector Indexed Successfully!\n\nFilename: ${doc.filename}\nDomain: ${doc.domain}\nExtracted Entities: ${JSON.stringify(doc.entities_json?.equipment_tags || [])}\n\nYou can now ask me any specific question about this document!`,
+            content: `📄 Document Uploaded & Vector Indexed Successfully!\n\nFilename: ${doc.filename}\nDomain: ${doc.domain}\nExtracted Equipment: ${JSON.stringify(doc.entities_json?.equipment_tags || [])}\n\nYou can now ask me any operational question about this document!`,
+            confidence: 99,
             documents_referenced: [doc.filename],
             timestamp: new Date().toISOString()
           }
@@ -166,14 +180,14 @@ export default function CopilotChat() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 40px)', width: '100%', maxWidth: '900px', margin: '0 auto', position: 'relative' }}>
       
-      {/* ChatGPT-Style Header */}
+      {/* Header */}
       <div style={{ padding: '1rem 0', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <div style={{ background: 'var(--primary-gradient)', padding: '0.4rem', borderRadius: '10px', display: 'flex', alignItems: 'center' }}>
             <Sparkles size={20} color="white" />
           </div>
-          <span style={{ fontSize: '1.2rem', fontWeight: '700', color: '#f8fafc' }}>KnowledgeBrain 3.5</span>
-          <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.08)', color: '#94a3b8', padding: '0.15rem 0.5rem', borderRadius: '6px', marginLeft: '0.4rem' }}>Multimodal Studio</span>
+          <span style={{ fontSize: '1.2rem', fontWeight: '700', color: '#f8fafc' }}>Expert Knowledge Copilot</span>
+          <span style={{ fontSize: '0.75rem', background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', padding: '0.15rem 0.5rem', borderRadius: '6px', marginLeft: '0.4rem', fontWeight: '600' }}>Mobile Field Ready</span>
         </div>
         
         <button className="btn-secondary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }} onClick={fetchHistory}>
@@ -181,16 +195,16 @@ export default function CopilotChat() {
         </button>
       </div>
 
-      {/* Main ChatGPT Stream Box */}
+      {/* Main Chat Stream */}
       <div style={{ flex: 1, overflowY: 'auto', paddingRight: '0.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem', paddingBottom: '130px' }}>
         {messages.length === 0 ? (
           <div style={{ margin: 'auto', textAlign: 'center', color: '#64748b', maxWidth: '500px', padding: '3rem 1rem' }}>
             <div style={{ background: 'rgba(99, 102, 241, 0.12)', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
               <Sparkles size={32} color="#6366f1" />
             </div>
-            <h3 style={{ color: '#f8fafc', fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>How can I help with your documents today?</h3>
+            <h3 style={{ color: '#f8fafc', fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>Ask Operational & Maintenance Questions</h3>
             <p style={{ fontSize: '0.95rem', color: '#94a3b8', lineHeight: '1.6', marginBottom: '2rem' }}>
-              Upload a document directly using the 📎 paperclip button, speak using the 🎙️ microphone, or ask any operational question below.
+              Field Technician RAG Assistant. Upload documents via 📎 paperclip, speak via 🎙️ mic, or type operational queries.
             </p>
           </div>
         ) : (
@@ -224,16 +238,29 @@ export default function CopilotChat() {
                   {msg.content}
                 </div>
 
-                {/* Document source citation pill */}
-                {msg.role === 'assistant' && msg.documents_referenced && msg.documents_referenced.length > 0 && (
-                  <div style={{ marginTop: '0.85rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#06b6d4', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>
-                      📄 Source: {msg.documents_referenced.join(', ')}
-                    </span>
+                {/* Source Citations & Confidence Rating Badges */}
+                {msg.role === 'assistant' && (
+                  <div style={{ marginTop: '0.85rem', display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    {msg.confidence && (
+                      <span style={{ fontSize: '0.75rem', background: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.3)', color: '#22c55e', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <CheckCircle size={12} /> {msg.confidence}% Confidence Rating
+                      </span>
+                    )}
+
+                    {msg.documents_referenced && msg.documents_referenced.map((dName, dIdx) => (
+                      <button
+                        key={dIdx}
+                        onClick={() => openDocViewer(dName)}
+                        title="Click to view originating document source"
+                        style={{ fontSize: '0.75rem', background: 'rgba(6, 182, 212, 0.12)', border: '1px solid rgba(6, 182, 212, 0.3)', color: '#06b6d4', padding: '0.2rem 0.6rem', borderRadius: '6px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                      >
+                        <Eye size={12} /> Source Link: {dName}
+                      </button>
+                    ))}
                   </div>
                 )}
 
-                {/* Dynamic follow-up suggestion chips */}
+                {/* Suggested follow-up prompt chips */}
                 {msg.suggested_followups && msg.suggested_followups.length > 0 && (
                   <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                     {msg.suggested_followups.map((f, fIdx) => (
@@ -281,15 +308,14 @@ export default function CopilotChat() {
             <div style={{ background: 'var(--primary-gradient)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Sparkles className="spin-icon" size={18} color="white" />
             </div>
-            <span>Thinking and analyzing document details...</span>
+            <span>Searching corpus and synthesizing operational answer...</span>
           </div>
         )}
         <div ref={chatEndRef} />
       </div>
 
-      {/* ChatGPT / Gemini-Style Multimodal Prompt Bar with File Attachment & Voice Mic */}
+      {/* Multimodal Prompt Input Bar */}
       <div style={{ position: 'absolute', bottom: '10px', left: 0, right: 0, background: 'var(--bg-dark)', paddingTop: '10px' }}>
-        
         {isListening && (
           <div style={{ textAlign: 'center', color: '#ef4444', fontSize: '0.85rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', fontWeight: '600' }}>
             <span style={{ width: '10px', height: '10px', background: '#ef4444', borderRadius: '50%', display: 'inline-block', animation: 'pulse-border 1s infinite' }}></span>
@@ -298,37 +324,21 @@ export default function CopilotChat() {
         )}
 
         <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-          
-          {/* File Upload Paperclip Attachment Button */}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             title="Attach Document"
-            style={{
-              position: 'absolute',
-              left: '14px',
-              background: 'transparent',
-              border: 'none',
-              color: '#94a3b8',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justify: 'center',
-              padding: '0.4rem',
-              borderRadius: '50%',
-              transition: 'all 0.2s'
-            }}
+            style={{ position: 'absolute', left: '14px', background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.4rem' }}
           >
             <Paperclip size={20} />
           </button>
           <input type="file" ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} accept=".pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg,.msg,.eml" />
 
-          {/* Prompt Input Field */}
           <input
             type="text"
             value={inputQuery}
             onChange={(e) => setInputQuery(e.target.value)}
-            placeholder={isListening ? "Listening..." : "Message KnowledgeBrain AI or attach a file..."}
+            placeholder={isListening ? "Listening..." : "Ask an operational query or attach a document..."}
             style={{
               width: '100%',
               background: 'rgba(24, 33, 54, 0.9)',
@@ -342,57 +352,50 @@ export default function CopilotChat() {
             }}
           />
 
-          {/* Voice Mic Button */}
           <button
             type="button"
             onClick={toggleVoiceRecognition}
             title={isListening ? "Stop Listening" : "Voice Input"}
-            style={{
-              position: 'absolute',
-              right: '58px',
-              background: isListening ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
-              color: isListening ? '#ef4444' : '#94a3b8',
-              border: 'none',
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justify: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
+            style={{ position: 'absolute', right: '58px', background: isListening ? 'rgba(239, 68, 68, 0.2)' : 'transparent', color: isListening ? '#ef4444' : '#94a3b8', border: 'none', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
           >
             {isListening ? <MicOff size={20} /> : <Mic size={20} />}
           </button>
 
-          {/* Send Submit Button */}
           <button
             type="submit"
             disabled={loading || !inputQuery.trim()}
-            style={{
-              position: 'absolute',
-              right: '12px',
-              background: inputQuery.trim() ? 'var(--primary-gradient)' : 'rgba(255,255,255,0.1)',
-              color: 'white',
-              border: 'none',
-              width: '38px',
-              height: '38px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justify: 'center',
-              cursor: inputQuery.trim() ? 'pointer' : 'default',
-              transition: 'all 0.2s'
-            }}
+            style={{ position: 'absolute', right: '12px', background: inputQuery.trim() ? 'var(--primary-gradient)' : 'rgba(255,255,255,0.1)', color: 'white', border: 'none', width: '38px', height: '38px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: inputQuery.trim() ? 'pointer' : 'default' }}
           >
             <Send size={18} />
           </button>
         </form>
-        <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>
-          Supports Voice Recognition & Direct Document Attachment (PDF, DOCX, XLSX, Photos).
-        </div>
       </div>
+
+      {/* Originating Document Source Modal (Direct Link Preview) */}
+      {selectedDoc && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '700px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: '1.5rem', background: '#111827' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#06b6d4', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <FileText size={20} /> Originating Source Document Preview
+              </h3>
+              <button onClick={() => setSelectedDoc(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={22} /></button>
+            </div>
+            
+            <div style={{ flex: 1, overflowY: 'auto', paddingRight: '0.5rem', color: '#e2e8f0', fontSize: '0.9rem', lineHeight: '1.6' }}>
+              <div style={{ marginBottom: '1rem', background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '8px' }}>
+                <div><strong>Title:</strong> {selectedDoc.filename}</div>
+                <div><strong>Domain:</strong> {selectedDoc.domain}</div>
+                <div><strong>Uploaded:</strong> {selectedDoc.upload_date?.substring(0, 10)}</div>
+              </div>
+              <h4 style={{ color: '#f8fafc', marginBottom: '0.5rem' }}>Raw Text Content Excerpt:</h4>
+              <div style={{ whiteSpace: 'pre-wrap', background: 'rgba(0,0,0,0.4)', padding: '1rem', borderRadius: '8px', fontSize: '0.85rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                {selectedDoc.content_text}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
