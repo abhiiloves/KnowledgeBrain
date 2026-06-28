@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Send, User, CheckCircle2, Link2, HelpCircle, AlertCircle } from 'lucide-react';
 
-const API_BASE = '/api/v1';
+import { API_BASE } from '../config';
 
 export default function CopilotChat() {
   const [messages, setMessages] = useState([]);

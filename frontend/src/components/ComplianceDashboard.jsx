@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ShieldCheck, Download, AlertTriangle, CheckCircle, FileText, ChevronRight } from 'lucide-react';
 
-const API_BASE = '/api/v1';
+import { API_BASE } from '../config';
 
 export default function ComplianceDashboard() {
   const [complianceData, setComplianceData] = useState(null);

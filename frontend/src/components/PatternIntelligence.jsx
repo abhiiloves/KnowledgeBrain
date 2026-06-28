@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Network, GitCommit, AlertOctagon, ArrowRight, Layers, ShieldAlert } from 'lucide-react';
 
-const API_BASE = '/api/v1';
+import { API_BASE } from '../config';
 
 export default function PatternIntelligence() {
   const [patterns, setPatterns] = useState([]);

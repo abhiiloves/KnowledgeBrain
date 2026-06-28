@@ -6,7 +6,7 @@ import CopilotChat from './components/CopilotChat';
 import PatternIntelligence from './components/PatternIntelligence';
 import ComplianceDashboard from './components/ComplianceDashboard';
 
-const API_BASE = '/api/v1';
+import { API_BASE } from './config';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -191,29 +191,6 @@ export default function App() {
 
       {/* Main Content Area */}
       <main style={{ flex: 1, padding: '2rem 3rem', overflowY: 'auto' }}>
-        {/* Judges Demo Flow Bar */}
-        <div className="glass-panel" style={{ padding: '1rem 1.5rem', marginBottom: '2rem', background: 'rgba(249, 115, 22, 0.08)', border: '1px solid rgba(249, 115, 22, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <AlertTriangle size={20} color="#f97316" />
-            <div>
-              <div style={{ fontWeight: '700', fontSize: '0.9rem', color: '#f97316' }}>JUDGES DEMO SCENARIO RUNNER</div>
-              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Click steps sequentially to demonstrate cross-time pattern escalation from Low → Medium → CRITICAL ALERT</div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-            <button className="btn-secondary" style={{ fontSize: '0.8rem', padding: '0.5rem 0.8rem' }} onClick={() => handleRunDemoStep('step1', 'Step 1: Furnace Explosion')} disabled={demoStepLoading}>
-              <Play size={14} /> Step 1: Furnace Explosion
-            </button>
-            <button className="btn-secondary" style={{ fontSize: '0.8rem', padding: '0.5rem 0.8rem', borderColor: 'rgba(249, 115, 22, 0.4)' }} onClick={() => handleRunDemoStep('step2', 'Step 2: Fatal Tube Stacking')} disabled={demoStepLoading}>
-              <Play size={14} color="#f97316" /> Step 2: Tube Stacking (Medium 🟠)
-            </button>
-            <button className="btn-primary" style={{ fontSize: '0.8rem', padding: '0.5rem 0.8rem', background: 'linear-gradient(135deg, #ef4444, #f97316)' }} onClick={() => handleRunDemoStep('step3', 'Step 3: Heater Treater Fire')} disabled={demoStepLoading}>
-              <Play size={14} /> Step 3: Heater Fire (CRITICAL 🔴)
-            </button>
-          </div>
-        </div>
-
         {/* Toast alert */}
         {toastMessage && (
           <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', background: 'rgba(16, 22, 36, 0.95)', border: '1px solid #6366f1', padding: '1rem 1.5rem', borderRadius: '12px', color: 'white', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 1000 }}>

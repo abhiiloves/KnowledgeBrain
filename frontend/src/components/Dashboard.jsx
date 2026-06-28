@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FileText, Network, AlertTriangle, ShieldCheck, ArrowUpRight, Activity } from 'lucide-react';
 
-const API_BASE = '/api/v1';
+import { API_BASE } from '../config';
 
 export default function Dashboard({ onNavigate }) {
   const [stats, setStats] = useState(null);

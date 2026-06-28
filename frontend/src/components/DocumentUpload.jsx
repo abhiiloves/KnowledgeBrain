@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UploadCloud, File, CheckCircle, Cpu, Tag, AlertCircle } from 'lucide-react';
 
-const API_BASE = '/api/v1';
+import { API_BASE } from '../config';
 
 export default function DocumentUpload() {
   const [documents, setDocuments] = useState([]);
