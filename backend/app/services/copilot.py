@@ -11,39 +11,37 @@ class CopilotAgent:
         patterns = DatabaseManager.get_all_patterns()
         history = DatabaseManager.get_chat_history(session_id)
 
-        # Build context from documents
+        # Build full context from documents
         doc_context_list = []
         referenced_docs = []
         for d in docs:
-            doc_context_list.append(f"Document: {d.get('filename')} (ID: {d.get('id')})\nContent Excerpt: {d.get('content_text')[:1500]}\nEntities: {d.get('entities_json')}")
+            doc_context_list.append(f"Document Filename: {d.get('filename')}\nDomain: {d.get('domain')}\nFull Content Text:\n{d.get('content_text')}\nEntities Extracted: {d.get('entities_json')}")
             referenced_docs.append(d.get('filename'))
 
-        doc_context_str = "\n\n---\n\n".join(doc_context_list) if doc_context_list else "No documents ingested yet."
-        pattern_context_str = "\n".join([f"Pattern: {p.get('title')} ({p.get('severity')} - {p.get('occurrence_count')} incidents across {p.get('document_names')})" for p in patterns])
+        doc_context_str = "\n\n====================\n\n".join(doc_context_list) if doc_context_list else "No documents ingested in knowledge base yet."
+        pattern_context_str = "\n".join([f"Pattern: {p.get('title')} (Severity: {p.get('severity')} - Incidents Count: {p.get('occurrence_count')} in {p.get('document_names')})" for p in patterns])
 
         system_instruction = (
-            "You are the Expert Knowledge Copilot for KnowledgeBrain. Your goal is to deliver authoritative, highly accurate intelligence based strictly on uploaded industrial logs and documents.\n"
-            "You MUST format your output with clear distinct sections:\n"
-            "1. Answer: [Direct comprehensive answer]\n"
-            "2. Source: [Exact document filenames and clause/sections cited]\n"
-            "3. Confidence: [Percentage score, e.g. 94%]\n"
-            "4. Related Pattern: [Mention any cross-document pattern detected]\n"
-            "5. Recommendation: [Actionable safety/regulatory compliance step]"
+            "You are KnowledgeBrain AI, an expert Senior Industrial Intelligence Specialist & Systems Architect. Your persona is highly articulate, genuine, helpful, natural, and deeply knowledgeable.\n\n"
+            "Guidelines for your response:\n"
+            "1. Answer the user's question in a clear, natural, comprehensive, and conversational manner. Avoid robotic templates or overly stiff forced headings unless appropriate.\n"
+            "2. Thoroughly analyze and reference the specific details from the uploaded documents in your answer (e.g. equipment tags, specific times, root causes, sequence of events, and regulatory clauses).\n"
+            "3. Seamlessly mention the exact document sources and clause numbers where the information comes from.\n"
+            "4. If cross-document patterns or recurring violations exist, mention them naturally to provide valuable foresight.\n"
+            "5. End with a helpful, actionable recommendation or suggestion."
         )
 
         prompt = (
-            f"User Question: {question}\n\n"
-            f"Available Knowledge Base Context:\n{doc_context_str}\n\n"
-            f"Active Detected Patterns Across Time:\n{pattern_context_str}\n\n"
-            "Deliver an expert, structured response following the required format."
+            f"User Query: {question}\n\n"
+            f"Uploaded Knowledge Base Documents & Records:\n{doc_context_str}\n\n"
+            f"Active Detected Cross-Document Patterns:\n{pattern_context_str}\n\n"
+            "Provide a comprehensive, genuine, detailed, and highly insightful response."
         )
 
         response_text = await GeminiLLMService.generate_text(prompt, system_instruction)
 
-        # Parse follow up questions dynamically based on content
         follow_ups = CopilotAgent._generate_follow_ups(question, docs)
 
-        # Save user turn
         DatabaseManager.save_chat_message({
             "session_id": session_id,
             "role": "user",
@@ -51,12 +49,11 @@ class CopilotAgent:
             "timestamp": datetime.datetime.utcnow().isoformat()
         })
 
-        # Save assistant turn
         assistant_msg = {
             "session_id": session_id,
             "role": "assistant",
             "content": response_text,
-            "confidence": 95 if docs else 70,
+            "confidence": 96 if docs else 75,
             "documents_referenced": referenced_docs,
             "suggested_followups": follow_ups,
             "timestamp": datetime.datetime.utcnow().isoformat()
@@ -68,21 +65,21 @@ class CopilotAgent:
     @staticmethod
     def _generate_follow_ups(question: str, docs: List[Dict[str, Any]]) -> List[str]:
         q_lower = question.lower()
-        if "root cause" in q_lower or "common" in q_lower:
+        if "explosion" in q_lower or "root cause" in q_lower or "cause" in q_lower:
             return [
-                "Which specific OISD standards were violated in these incidents?",
-                "What is the severity breakdown of all active patterns?",
-                "Generate an executive audit summary for plant management."
+                "What specific equipment valves or DCS alarms were involved?",
+                "Which OISD regulatory clauses were breached in this incident?",
+                "How can we prevent similar occurrences across our units?"
             ]
-        elif "permit" in q_lower or "oisd-std-105" in q_lower:
+        elif "permit" in q_lower or "sop" in q_lower:
             return [
                 "What are the mandatory gas testing requirements before hot work?",
-                "Show compliance gap analysis for OISD-STD-105.",
-                "How many total documents cite Work Permit violations?"
+                "Show compliance gap analysis across all standards.",
+                "How many recurring procedural violations exist?"
             ]
         else:
             return [
-                "What is the most critical recurring safety violation?",
-                "Which equipment tags appear most frequently in incident reports?",
-                "Generate compliance audit evidence package."
+                "Summarize the key findings and root causes of uploaded documents.",
+                "Which equipment tags appear most frequently in the logs?",
+                "Generate an executive safety audit summary."
             ]
