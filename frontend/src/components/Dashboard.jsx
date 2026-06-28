@@ -122,7 +122,7 @@ export default function Dashboard({ onNavigate }) {
               ))
             ) : (
               <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b', fontSize: '0.9rem' }}>
-                No active critical patterns detected yet. Upload documents or click "Run Step-by-Step Judge Demo" above!
+                No active critical patterns detected yet. Upload documents in the Document Ingestion tab to run continuous analysis.
               </div>
             )}
           </div>

@@ -82,11 +82,8 @@ export default function CopilotChat() {
             <Bot size={48} color="#6366f1" style={{ marginBottom: '1rem', opacity: 0.6 }} />
             <h3 style={{ color: '#f8fafc', marginBottom: '0.5rem' }}>Ask your Knowledge Base anything!</h3>
             <p style={{ fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Try asking: "What is the most common root cause across all incidents?" or "Which OISD standards were violated?"
+              Upload your industrial logs, audit reports, or documents in the Document Ingestion tab, then type any operational or safety query below.
             </p>
-            <button className="btn-secondary" onClick={() => handleSend('What is the most common root cause across all incidents?')}>
-              Ask Demo Question 🚀
-            </button>
           </div>
         ) : (
           messages.map((msg, idx) => (
