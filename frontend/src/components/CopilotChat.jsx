@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Send, User, CheckCircle2, Link2, Sparkles, AlertCircle } from 'lucide-react';
+import { Bot, Send, User, Sparkles, RefreshCw, Paperclip } from 'lucide-react';
 import { API_BASE } from '../config';
 
 export default function CopilotChat() {
@@ -52,8 +52,7 @@ export default function CopilotChat() {
         const errText = await res.text();
         setMessages((prev) => [...prev, {
           role: 'assistant',
-          content: `⚠️ Notice: Server returned error (${res.status}). Ensure backend is running. Details: ${errText.substring(0, 150)}`,
-          confidence: 50,
+          content: `Notice: Server returned status ${res.status}. Ensure backend is online. ${errText.substring(0, 100)}`,
           timestamp: new Date().toISOString()
         }]);
       }
@@ -61,8 +60,7 @@ export default function CopilotChat() {
       console.error('Query error:', err);
       setMessages((prev) => [...prev, {
         role: 'assistant',
-        content: `⚠️ Connection Notice: Could not reach backend server at ${API_BASE}. Please verify your backend server is online.`,
-        confidence: 0,
+        content: `Connection Notice: Unable to reach backend server at ${API_BASE}.`,
         timestamp: new Date().toISOString()
       }]);
     } finally {
@@ -71,34 +69,33 @@ export default function CopilotChat() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', minHeight: '82vh', width: '100%' }}>
-      {/* Header */}
-      <div className="glass-panel" style={{ padding: '1.5rem 2rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(168, 85, 247, 0.12) 100%)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h2 style={{ fontSize: '2rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
-              <Bot size={32} color="#6366f1" /> Knowledge Studio & AI Copilot
-            </h2>
-            <p style={{ color: '#94a3b8', fontSize: '1rem' }}>
-              Spacious conversational intelligence workspace. Ask anything about your uploaded logs, equipment specs, or incident reports.
-            </p>
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 40px)', width: '100%', maxWidth: '900px', margin: '0 auto', position: 'relative' }}>
+      
+      {/* ChatGPT-Style Sleek Header */}
+      <div style={{ padding: '1rem 0', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <div style={{ background: 'var(--primary-gradient)', padding: '0.4rem', borderRadius: '10px', display: 'flex', alignItems: 'center' }}>
+            <Sparkles size={20} color="white" />
           </div>
-          <span className="badge" style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.3)', padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
-            ● AI INTELLIGENCE ACTIVE
-          </span>
+          <span style={{ fontSize: '1.2rem', fontWeight: '700', color: '#f8fafc' }}>KnowledgeBrain 3.5</span>
+          <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.08)', color: '#94a3b8', padding: '0.15rem 0.5rem', borderRadius: '6px', marginLeft: '0.4rem' }}>Document Agent</span>
         </div>
+        
+        <button className="btn-secondary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }} onClick={fetchHistory}>
+          <RefreshCw size={14} /> Sync History
+        </button>
       </div>
 
-      {/* Main Spacious Chat Container */}
-      <div className="glass-panel" style={{ flex: 1, padding: '2rem', minHeight: '550px', maxHeight: '70vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', background: 'rgba(10, 13, 20, 0.6)' }}>
+      {/* Main ChatGPT Stream Box */}
+      <div style={{ flex: 1, overflowY: 'auto', paddingRight: '0.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem', paddingBottom: '120px' }}>
         {messages.length === 0 ? (
-          <div style={{ margin: 'auto', textAlign: 'center', color: '#64748b', maxWidth: '600px', padding: '3rem 1rem' }}>
-            <div style={{ background: 'rgba(99, 102, 241, 0.15)', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-              <Sparkles size={40} color="#6366f1" />
+          <div style={{ margin: 'auto', textAlign: 'center', color: '#64748b', maxWidth: '500px', padding: '4rem 1rem' }}>
+            <div style={{ background: 'rgba(99, 102, 241, 0.12)', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
+              <Sparkles size={32} color="#6366f1" />
             </div>
-            <h3 style={{ color: '#f8fafc', fontSize: '1.4rem', fontWeight: '700', marginBottom: '0.75rem' }}>What would you like to know about your documents?</h3>
-            <p style={{ fontSize: '1rem', color: '#94a3b8', lineHeight: '1.6', marginBottom: '2rem' }}>
-              Upload your industrial logs or reports, then ask operational questions, root causes, regulatory compliance gaps, or equipment status.
+            <h3 style={{ color: '#f8fafc', fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>How can I help with your documents today?</h3>
+            <p style={{ fontSize: '0.95rem', color: '#94a3b8', lineHeight: '1.6', marginBottom: '2rem' }}>
+              Ask anything about your specific uploaded report, equipment specifications, or operational details.
             </p>
           </div>
         ) : (
@@ -109,115 +106,130 @@ export default function CopilotChat() {
                 display: 'flex',
                 gap: '1.25rem',
                 alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                width: msg.role === 'user' ? 'fit-content' : '100%',
-                maxWidth: msg.role === 'user' ? '80%' : '100%',
+                width: '100%',
+                maxWidth: msg.role === 'user' ? '85%' : '100%',
               }}
             >
               {msg.role === 'assistant' && (
-                <div style={{ background: 'var(--primary-gradient)', padding: '0.75rem', borderRadius: '14px', height: 'fit-content', boxShadow: '0 4px 12px rgba(99,102,241,0.3)' }}>
-                  <Bot size={24} color="white" />
+                <div style={{ background: 'var(--primary-gradient)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '0.2rem' }}>
+                  <Sparkles size={18} color="white" />
                 </div>
               )}
 
               <div
-                className="glass-card"
                 style={{
                   flex: 1,
-                  background: msg.role === 'user' ? 'rgba(99, 102, 241, 0.25)' : 'rgba(16, 22, 36, 0.9)',
-                  border: msg.role === 'user' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '16px',
-                  padding: '1.5rem',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
+                  background: msg.role === 'user' ? 'rgba(99, 102, 241, 0.2)' : 'transparent',
+                  border: msg.role === 'user' ? '1px solid rgba(99, 102, 241, 0.3)' : 'none',
+                  borderRadius: msg.role === 'user' ? '18px' : '0',
+                  padding: msg.role === 'user' ? '1rem 1.25rem' : '0.25rem 0',
                 }}
               >
-                <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7', fontSize: '1.05rem', color: '#f8fafc' }}>{msg.content}</div>
+                <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', fontSize: '1.05rem', color: '#f8fafc', letterSpacing: '0.01em' }}>
+                  {msg.content}
+                </div>
 
-                {/* Assistant Footer Info */}
-                {msg.role === 'assistant' && (
-                  <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', fontSize: '0.85rem' }}>
-                    {msg.confidence && (
-                      <span style={{ color: '#22c55e', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontWeight: '700', background: 'rgba(34, 197, 94, 0.1)', padding: '0.3rem 0.75rem', borderRadius: '6px' }}>
-                        <CheckCircle2 size={16} /> Verified Confidence: {msg.confidence}%
-                      </span>
-                    )}
-                    {msg.documents_referenced && msg.documents_referenced.length > 0 && (
-                      <span style={{ color: '#06b6d4', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(6, 182, 212, 0.1)', padding: '0.3rem 0.75rem', borderRadius: '6px' }}>
-                        <Link2 size={16} /> Knowledge Base Sources: {msg.documents_referenced.join(', ')}
-                      </span>
-                    )}
+                {/* Document source citation pill */}
+                {msg.role === 'assistant' && msg.documents_referenced && msg.documents_referenced.length > 0 && (
+                  <div style={{ marginTop: '0.85rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#06b6d4', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>
+                      📄 Source: {msg.documents_referenced.join(', ')}
+                    </span>
                   </div>
                 )}
 
-                {/* Proactive Follow-ups */}
+                {/* Dynamic follow-up suggestion chips */}
                 {msg.suggested_followups && msg.suggested_followups.length > 0 && (
-                  <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Proactive Intelligence Follow-ups:</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      {msg.suggested_followups.map((f, fIdx) => (
-                        <button
-                          key={fIdx}
-                          onClick={() => handleSend(f)}
-                          style={{
-                            background: 'rgba(255,255,255,0.06)',
-                            border: '1px solid rgba(255,255,255,0.15)',
-                            color: '#a5b4fc',
-                            padding: '0.4rem 0.85rem',
-                            borderRadius: '8px',
-                            fontSize: '0.85rem',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            transition: 'all 0.2s'
-                          }}
-                          onMouseEnter={(e) => e.target.style.background = 'rgba(99, 102, 241, 0.2)'}
-                          onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.06)'}
-                        >
-                          💡 {f}
-                        </button>
-                      ))}
-                    </div>
+                  <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {msg.suggested_followups.map((f, fIdx) => (
+                      <button
+                        key={fIdx}
+                        onClick={() => handleSend(f)}
+                        style={{
+                          background: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          color: '#a5b4fc',
+                          padding: '0.35rem 0.75rem',
+                          borderRadius: '20px',
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        💡 {f}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
 
               {msg.role === 'user' && (
-                <div style={{ background: 'rgba(255,255,255,0.12)', padding: '0.75rem', borderRadius: '14px', height: 'fit-content' }}>
-                  <User size={24} color="#f8fafc" />
+                <div style={{ background: 'rgba(255,255,255,0.1)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '0.2rem' }}>
+                  <User size={18} color="#f8fafc" />
                 </div>
               )}
             </div>
           ))
         )}
+
         {loading && (
-          <div style={{ color: '#6366f1', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '12px', width: 'fit-content' }}>
-            <Sparkles className="spin-icon" size={22} /> AI Copilot synthesizing document intelligence & cross-referencing records...
+          <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', color: '#94a3b8', fontSize: '0.95rem' }}>
+            <div style={{ background: 'var(--primary-gradient)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Sparkles className="spin-icon" size={18} color="white" />
+            </div>
+            <span>Thinking and analyzing document details...</span>
           </div>
         )}
         <div ref={chatEndRef} />
       </div>
 
-      {/* Prominent Large Input Box */}
-      <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} style={{ display: 'flex', gap: '1rem' }}>
-        <input
-          type="text"
-          value={inputQuery}
-          onChange={(e) => setInputQuery(e.target.value)}
-          placeholder="Ask AI Copilot anything about your uploaded documents (e.g. Explosion ki main waja kya thi?)"
-          style={{
-            flex: 1,
-            background: 'rgba(16, 22, 36, 0.95)',
-            border: '1.5px solid rgba(99, 102, 241, 0.4)',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            color: 'white',
-            fontSize: '1.05rem',
-            outline: 'none',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
-          }}
-        />
-        <button type="submit" className="btn-primary" disabled={loading} style={{ padding: '0 2rem', borderRadius: '14px', fontSize: '1.05rem' }}>
-          <Send size={22} /> Send Query
-        </button>
-      </form>
+      {/* ChatGPT-Style Floating Bottom Prompt Bar */}
+      <div style={{ position: 'absolute', bottom: '10px', left: 0, right: 0, background: 'var(--bg-dark)', paddingTop: '10px' }}>
+        <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <input
+            type="text"
+            value={inputQuery}
+            onChange={(e) => setInputQuery(e.target.value)}
+            placeholder="Message KnowledgeBrain AI..."
+            style={{
+              width: '100%',
+              background: 'rgba(24, 33, 54, 0.9)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '24px',
+              padding: '1.1rem 3.5rem 1.1rem 1.5rem',
+              color: 'white',
+              fontSize: '1.05rem',
+              outline: 'none',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
+            }}
+          />
+          <button
+            type="submit"
+            disabled={loading || !inputQuery.trim()}
+            style={{
+              position: 'absolute',
+              right: '12px',
+              background: inputQuery.trim() ? 'var(--primary-gradient)' : 'rgba(255,255,255,0.1)',
+              color: 'white',
+              border: 'none',
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justify: 'center',
+              cursor: inputQuery.trim() ? 'pointer' : 'default',
+              transition: 'all 0.2s'
+            }}
+          >
+            <Send size={18} />
+          </button>
+        </form>
+        <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>
+          KnowledgeBrain AI provides verified document insights. Always check source references.
+        </div>
+      </div>
+
     </div>
   );
 }
