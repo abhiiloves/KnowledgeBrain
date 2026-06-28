@@ -7,7 +7,6 @@ class CopilotAgent:
     @staticmethod
     async def ask_question(question: str, session_id: str = "default", doc_id: str = None) -> Dict[str, Any]:
         docs = DatabaseManager.get_all_documents()
-        patterns = DatabaseManager.get_all_patterns()
 
         # Check if user explicitly asks to combine/compare reports
         q_lower = question.lower()
@@ -16,40 +15,41 @@ class CopilotAgent:
             "cross-document", "dono ko mila", "sare report", "sab mila", "dono ke mila"
         ])
 
-        # Select relevant document context based on user intent
         doc_context_list = []
         referenced_docs = []
 
-        if doc_id:
-            target_doc = DatabaseManager.get_document_by_id(doc_id)
-            if target_doc:
-                docs = [target_doc]
-
-        if not is_comparison_requested and len(docs) > 1:
-            # By default, focus primarily on the latest uploaded document or the specific document queried
-            latest_doc = docs[0]  # docs are stored latest first
-            doc_context_list.append(f"Primary Document: {latest_doc.get('filename')}\nContent:\n{latest_doc.get('content_text')}\nEntities: {latest_doc.get('entities_json')}")
-            referenced_docs.append(latest_doc.get('filename'))
-        else:
-            for d in docs:
-                doc_context_list.append(f"Document Filename: {d.get('filename')}\nContent:\n{d.get('content_text')}\nEntities: {d.get('entities_json')}")
-                referenced_docs.append(d.get('filename'))
+        if docs:
+            # docs[0] is the LATEST uploaded document because database.py sorts descending by upload_date
+            latest_doc = docs[0]
+            
+            if not is_comparison_requested:
+                # Primary focus on the LATEST uploaded file
+                doc_context_list.append(f"★ LATEST UPLOADED DOCUMENT (ACTIVE CONTEXT): {latest_doc.get('filename')}\nContent:\n{latest_doc.get('content_text')}\nEntities: {latest_doc.get('entities_json')}")
+                referenced_docs.append(latest_doc.get('filename'))
+                
+                # Also include historical docs as secondary context if needed
+                for d in docs[1:]:
+                    doc_context_list.append(f"Historical Document: {d.get('filename')}\nContent Summary: {d.get('content_text')[:500]}")
+            else:
+                for d in docs:
+                    doc_context_list.append(f"Document Filename: {d.get('filename')}\nContent:\n{d.get('content_text')}\nEntities: {d.get('entities_json')}")
+                    referenced_docs.append(d.get('filename'))
 
         doc_context_str = "\n\n====================\n\n".join(doc_context_list) if doc_context_list else "No document ingested yet."
 
         system_instruction = (
-            "You are KnowledgeBrain AI, a helpful, natural, and highly articulate Senior Intelligence Specialist (acting with ChatGPT-level conversation excellence).\n\n"
-            "STRICT SCOPE RULES:\n"
-            "1. Answer strictly and specifically about the target document in context. DO NOT mix or combine details from other unrelated reports unless the user explicitly asks to 'compare reports' or 'combine all documents'.\n"
-            "2. Be genuine, natural, detailed, and clear. Avoid stiff robotic templates. Give direct, insightful answers.\n"
-            "3. Cite specific equipment tags, dates, times, and clauses from the text where appropriate.\n"
+            "You are KnowledgeBrain AI, a highly intelligent Senior Industrial Intelligence Specialist (acting with ChatGPT-level conversation excellence).\n\n"
+            "STRICT CONTEXT & FILE RULES:\n"
+            "1. Focus your answer directly and specifically on the LATEST UPLOADED DOCUMENT (marked with ★). When the user uploads a new file and asks a question, answer about THAT new file!\n"
+            "2. DO NOT confuse details of older historical files with the newly uploaded file, unless the user explicitly asks to 'compare reports' or 'combine documents'.\n"
+            "3. Provide clear, genuine, articulate, and insightful answers citing exact equipment tags, dates, and causes from the text.\n"
             "4. End with a helpful next step or recommendation."
         )
 
         prompt = (
             f"User Query: {question}\n\n"
-            f"Relevant Document Context:\n{doc_context_str}\n\n"
-            "Provide a clear, genuine, and comprehensive answer focusing strictly on the relevant document."
+            f"Knowledge Base Document Context:\n{doc_context_str}\n\n"
+            "Provide a clear, genuine, and comprehensive answer focusing on the relevant active document."
         )
 
         response_text = await GeminiLLMService.generate_text(prompt, system_instruction)

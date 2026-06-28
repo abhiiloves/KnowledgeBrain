@@ -48,7 +48,7 @@ class DatabaseManager:
                     return res.data
             except Exception as ex:
                 print(f"Supabase error fetching documents: {ex}")
-        return in_memory_db["documents"]
+        return sorted(in_memory_db["documents"], key=lambda x: x.get("upload_date", ""), reverse=True)
 
     @staticmethod
     def get_document_by_id(doc_id: str) -> Optional[Dict[str, Any]]:
