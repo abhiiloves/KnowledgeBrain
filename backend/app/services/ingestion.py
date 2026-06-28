@@ -20,7 +20,6 @@ class IngestionAgent:
         ext = filename.split(".")[-1].lower() if "." in filename else ""
         text_content = ""
 
-        # Parser selection based on extension
         try:
             if ext == "pdf":
                 reader = PdfReader(io.BytesIO(file_bytes))
@@ -44,7 +43,6 @@ class IngestionAgent:
                 else:
                     text_content = file_bytes.decode("utf-8", errors="ignore")
             elif ext in ["png", "jpg", "jpeg"]:
-                # OCR placeholder / basic image info
                 img = Image.open(io.BytesIO(file_bytes))
                 text_content = f"[Image Document: {filename}, Size: {img.size}, Format: {img.format}]\nExtracted text content from visual inspection log."
             else:
@@ -56,14 +54,13 @@ class IngestionAgent:
         if not text_content.strip():
             text_content = f"Document content for {filename}. (Contains operational records and compliance logs)."
 
-        # Auto Detect Domain
         domain = IngestionAgent._detect_domain(text_content, filename)
-
-        # Entity Extraction
         entities = await IngestionAgent._extract_entities(text_content, domain)
+        smart_title = IngestionAgent._generate_smart_title(text_content, filename)
 
         doc_record = {
-            "filename": filename,
+            "filename": smart_title,  # Smart clean human readable title
+            "original_filename": filename,
             "domain": domain,
             "upload_date": datetime.datetime.utcnow().isoformat(),
             "content_text": text_content,
@@ -73,6 +70,36 @@ class IngestionAgent:
 
         saved_doc = DatabaseManager.save_document(doc_record)
         return saved_doc
+
+    @staticmethod
+    def _generate_smart_title(text: str, raw_filename: str) -> str:
+        text_lower = text.lower()
+        
+        # 1. Look for explicit title markers in document text
+        title_match = re.search(r'(?:title|subject|case study)[:\s]+([^\n\r.]+)', text, re.IGNORECASE)
+        if title_match:
+            clean = title_match.group(1).strip()
+            if len(clean) > 5 and len(clean) < 70:
+                return clean.title()
+
+        # 2. Key concept identification for clean naming
+        if "explosion" in text_lower and "furnace" in text_lower:
+            return "Refinery Furnace Explosion Incident Report"
+        elif "tube" in text_lower and ("stacking" in text_lower or "fatal" in text_lower):
+            return "Pipe Yard Tube Stacking Safety Report"
+        elif "heater" in text_lower and ("fire" in text_lower or "treater" in text_lower):
+            return "Heater Treater Thermal Fire Incident Report"
+        elif "iso 27001" in text_lower or "cybersecurity" in text_lower:
+            return "ISO 27001 Information Security Audit Log"
+        elif "hipaa" in text_lower or "patient" in text_lower:
+            return "HIPAA Healthcare Operational Log"
+
+        # 3. Clean fallback from raw filename (e.g. OISD_CS_2024_12.pdf -> Oisd Cs 2024 12)
+        base = raw_filename.rsplit('.', 1)[0]
+        cleaned_base = re.sub(r'[^a-zA-Z0-9\s]', ' ', base)
+        cleaned_base = re.sub(r'\s+', ' ', cleaned_base).strip().title()
+        
+        return cleaned_base if len(cleaned_base) > 3 else raw_filename
 
     @staticmethod
     def _detect_domain(text: str, filename: str) -> str:
@@ -89,12 +116,10 @@ class IngestionAgent:
 
     @staticmethod
     async def _extract_entities(text: str, domain: str) -> Dict[str, Any]:
-        # Rule-based regex extraction paired with heuristic intelligence
         eq_tags = list(set(re.findall(r'\b[A-Z]{1,3}-\d{2,4}[A-Z]?\b', text)))
         reg_refs = list(set(re.findall(r'\b(?:OISD-[A-Z]+-\d+|ISO\s?\d+|HIPAA|PESO|Factory Act)\b', text, re.IGNORECASE)))
         dates = list(set(re.findall(r'\b\d{2}[/-]\d{2}[/-]\d{4}\b|\b\d{4}-\d{2}-\d{2}\b', text)))
 
-        # Heuristic root causes and recommendations based on text analysis
         root_causes = []
         recommendations = []
         personnel = []
