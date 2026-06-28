@@ -8,78 +8,56 @@ class CopilotAgent:
     async def ask_question(question: str, session_id: str = "default", doc_id: str = None) -> Dict[str, Any]:
         docs = DatabaseManager.get_all_documents()
         patterns = DatabaseManager.get_all_patterns()
+        history = DatabaseManager.get_chat_history(session_id)
 
-        q_lower = question.lower()
-        
-        # 1. Detect if user is asking about overall repository stats / file count / listing all documents
-        is_overview_query = any(k in q_lower for k in [
-            "how many", "kitne", "kitni", "total report", "total document", "list all",
-            "what documents", "all files", "kitne file", "what reports", "repository",
-            "summary of all", "sabka summary"
-        ])
+        # 1. Build conversational history thread (like ChatGPT)
+        history_str = ""
+        if history:
+            recent_turns = history[-6:]  # last 3 turns
+            history_str = "\n".join([f"{m.get('role').upper()}: {m.get('content')}" for m in recent_turns])
 
-        # 2. Detect if user is asking to compare or combine reports
-        is_comparison_query = any(k in q_lower for k in [
-            "compare", "combine", "across reports", "cross-document", "dono ko mila",
-            "sare report", "sab mila", "dono ke mila", "difference between"
-        ])
-
-        doc_context_list = []
+        # 2. Build complete, transparent document workspace
+        doc_workspace_list = []
         referenced_docs = []
+        for idx, d in enumerate(docs):
+            doc_title = d.get('filename', f'Document_{idx+1}')
+            referenced_docs.append(doc_title)
+            is_latest = (idx == 0)
+            status_tag = "[MOST RECENTLY UPLOADED FILE]" if is_latest else "[HISTORICAL WORKSPACE FILE]"
+            
+            doc_workspace_list.append(
+                f"=== DOCUMENT {idx+1}: {doc_title} {status_tag} ===\n"
+                f"Domain: {d.get('domain')}\n"
+                f"Upload Date: {d.get('upload_date', '')[:10]}\n"
+                f"Extracted Entities: {d.get('entities_json')}\n"
+                f"Document Content:\n{d.get('content_text')}"
+            )
 
-        if docs:
-            if is_overview_query or is_comparison_query:
-                # Give FULL access to all documents with clear titles
-                for idx, d in enumerate(docs):
-                    doc_title = d.get('filename', f'Document_{idx+1}')
-                    doc_context_list.append(
-                        f"Document #{idx+1}: {doc_title} (Uploaded: {d.get('upload_date', '')[:10]})\n"
-                        f"Domain: {d.get('domain')}\n"
-                        f"Entities Extracted: {d.get('entities_json')}\n"
-                        f"Content Summary:\n{d.get('content_text')[:1500]}"
-                    )
-                    referenced_docs.append(doc_title)
-            else:
-                # Specific file query - primary focus on the latest active document, with awareness of total repo count
-                latest_doc = docs[0]
-                doc_title = latest_doc.get('filename', 'Latest Document')
-                doc_context_list.append(
-                    f"★ ACTIVE TARGET DOCUMENT: {doc_title}\n"
-                    f"Domain: {latest_doc.get('domain')}\n"
-                    f"Full Content:\n{latest_doc.get('content_text')}\n"
-                    f"Entities: {latest_doc.get('entities_json')}"
-                )
-                referenced_docs.append(doc_title)
-                
-                # List other files in metadata so AI is aware of repository size
-                other_titles = [d.get('filename') for d in docs[1:]]
-                if other_titles:
-                    doc_context_list.append(f"Other Stored Repository Files ({len(other_titles)} total): {', '.join(other_titles)}")
+        workspace_str = "\n\n".join(doc_workspace_list) if doc_workspace_list else "No documents uploaded in workspace yet."
+        pattern_str = "\n".join([f"Pattern Alert: {p.get('title')} ({p.get('severity')} - {p.get('occurrence_count')} incidents)" for p in patterns])
 
-        doc_context_str = "\n\n====================\n\n".join(doc_context_list) if doc_context_list else "No documents stored in knowledge base yet."
-        pattern_context_str = "\n".join([f"Pattern: {p.get('title')} (Severity: {p.get('severity')}, Incidents: {p.get('occurrence_count')})" for p in patterns])
-
+        # 3. ChatGPT / Gemini Custom GPT Style Master System Prompt
         system_instruction = (
-            "You are KnowledgeBrain AI, a highly intelligent Senior Industrial Systems Specialist with ChatGPT-level conversational excellence.\n\n"
-            f"REPOSITORY AWARENESS: There are currently {len(docs)} documents stored in your active knowledge repository.\n\n"
-            "GUIDELINES:\n"
-            "1. If the user asks general questions like 'How many reports do you have?' or 'List all documents', ACCURATELY state the total number of stored documents in the repository and list their smart titles cleanly!\n"
-            "2. If the user asks about a specific incident or the active document, answer thoroughly based on that file.\n"
-            "3. If the user asks to compare reports, analyze similarities and recurring patterns across documents.\n"
-            "4. Be articulate, natural, articulate, genuine, and highly helpful."
+            "You are KnowledgeBrain AI, a state-of-the-art multimodal AI assistant designed with the exact conversational brilliance, fluidity, and intelligence of ChatGPT and Gemini Pro.\n\n"
+            "YOUR CORE OPERATING PRINCIPLES:\n"
+            "1. REASONING AUTONOMY: You have full visibility over the user's workspace documents. Use intelligent context awareness to understand what the user is asking. If they ask about a recently uploaded file, answer specifically about that file. If they ask a general question ('How many files do I have?'), give an accurate counting overview of all workspace files.\n"
+            "2. CONVERSATIONAL EXCELLENCE: Respond in a warm, natural, articulate, genuine, and highly insightful tone (like ChatGPT). Avoid rigid templates or robotic forced headers unless requested.\n"
+            "3. ACCURATE CITATIONS: Cite exact equipment tags, dates, root causes, and regulatory clauses directly from the documents.\n"
+            "4. CONTINUOUS THREAD: Pay attention to the conversation history to maintain smooth dialogue flow."
         )
 
         prompt = (
-            f"User Query: {question}\n\n"
-            f"Total Repository Documents Stored: {len(docs)}\n\n"
-            f"Document Context:\n{doc_context_str}\n\n"
-            f"Active Patterns Detected:\n{pattern_context_str}\n\n"
-            "Provide an accurate, genuine, and insightful response directly answering the user's query."
+            f"=== WORKSPACE DOCUMENTS ({len(docs)} Files Total) ===\n{workspace_str}\n\n"
+            f"=== DETECTED SAFETY PATTERNS ===\n{pattern_str}\n\n"
+            f"=== RECENT DIALOGUE HISTORY ===\n{history_str}\n\n"
+            f"USER QUERY: {question}\n\n"
+            "Provide a brilliant, natural, genuine, and articulate response."
         )
 
         response_text = await GeminiLLMService.generate_text(prompt, system_instruction)
         follow_ups = CopilotAgent._generate_follow_ups(question, docs)
 
+        # Save user turn
         DatabaseManager.save_chat_message({
             "session_id": session_id,
             "role": "user",
@@ -87,12 +65,13 @@ class CopilotAgent:
             "timestamp": datetime.datetime.utcnow().isoformat()
         })
 
+        # Save assistant turn
         assistant_msg = {
             "session_id": session_id,
             "role": "assistant",
             "content": response_text,
-            "confidence": 96 if docs else 75,
-            "documents_referenced": referenced_docs,
+            "confidence": 98 if docs else 75,
+            "documents_referenced": referenced_docs[:3],
             "suggested_followups": follow_ups,
             "timestamp": datetime.datetime.utcnow().isoformat()
         }
@@ -104,12 +83,12 @@ class CopilotAgent:
     def _generate_follow_ups(question: str, docs: List[Dict[str, Any]]) -> List[str]:
         if len(docs) > 1:
             return [
-                f"Summarize all {len(docs)} stored documents.",
-                "Compare common root causes across reports.",
-                "Show regulatory compliance breakdown."
+                f"Summarize all {len(docs)} uploaded documents.",
+                "What are the recurring safety patterns across files?",
+                "What regulatory clauses apply to these reports?"
             ]
         return [
-            "Summarize key root causes of this document.",
+            "Summarize the key root causes of this report.",
             "What regulatory standards apply to this file?",
             "Show equipment tags extracted."
         ]
