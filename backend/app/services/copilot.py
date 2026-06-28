@@ -10,67 +10,48 @@ class CopilotAgent:
         patterns = DatabaseManager.get_all_patterns()
         history = DatabaseManager.get_chat_history(session_id)
 
-        q_lower = question.lower()
-        
-        # Detect if user explicitly requests elaboration or detailed explanation
-        is_elaboration_requested = any(k in q_lower for k in [
-            "elaborate", "explain", "detail", "vistar", "breakdown", "describe",
-            "full report", "complete summary", "deep dive", "sab kuch batao"
-        ])
-
-        # 1. Build conversational history thread
+        # 1. Dialogue history formatting
         history_str = ""
         if history:
-            recent_turns = history[-4:]
+            recent_turns = history[-6:]
             history_str = "\n".join([f"{m.get('role').upper()}: {m.get('content')}" for m in recent_turns])
 
-        # 2. Build complete document workspace
+        # 2. Complete workspace document compilation
         doc_workspace_list = []
         referenced_docs = []
         for idx, d in enumerate(docs):
             doc_title = d.get('filename', f'Document_{idx+1}')
             referenced_docs.append(doc_title)
             is_latest = (idx == 0)
-            status_tag = "[MOST RECENTLY UPLOADED FILE]" if is_latest else "[HISTORICAL WORKSPACE FILE]"
+            status = "[ACTIVE TARGET DOCUMENT / MOST RECENTLY UPLOADED]" if is_latest else "[HISTORICAL WORKSPACE FILE]"
             
             doc_workspace_list.append(
-                f"=== DOCUMENT {idx+1}: {doc_title} {status_tag} ===\n"
+                f"=== DOCUMENT {idx+1}: {doc_title} {status} ===\n"
                 f"Domain: {d.get('domain')}\n"
-                f"Content:\n{d.get('content_text')}"
+                f"Uploaded Date: {d.get('upload_date', '')[:10]}\n"
+                f"Structured Entities: {d.get('entities_json')}\n"
+                f"Complete Document Text:\n{d.get('content_text')}"
             )
 
         workspace_str = "\n\n".join(doc_workspace_list) if doc_workspace_list else "No documents uploaded in workspace yet."
-        pattern_str = "\n".join([f"Pattern Alert: {p.get('title')} ({p.get('severity')})" for p in patterns])
+        pattern_str = "\n".join([f"Pattern: {p.get('title')} ({p.get('severity')} - {p.get('occurrence_count')} incidents)" for p in patterns])
 
-        # 3. Dynamic Adaptive System Prompt based on user request depth
-        if is_elaboration_requested:
-            system_instruction = (
-                "You are KnowledgeBrain AI, a Senior Industrial Intelligence Specialist.\n\n"
-                "ELABORATION MODE ENGAGED:\n"
-                "The user explicitly asked to ELABORATE or EXPLAIN IN DETAIL. Provide a thorough, comprehensive, section-by-section detailed breakdown of the target document.\n"
-                "Include:\n"
-                "- Incident Overview & Background\n"
-                "- Detailed Sequence of Events & Observations\n"
-                "- Root Cause Analysis & Equipment Involved\n"
-                "- Regulatory Violations & Safety Recommendations\n"
-                "Be articulate, highly informative, genuine, and comprehensive."
-            )
-        else:
-            system_instruction = (
-                "You are KnowledgeBrain AI, a Senior Industrial Intelligence Specialist.\n\n"
-                "RESPONSE STYLE RULES:\n"
-                "1. Provide clear, direct, and accurate answers matching the user's query intent.\n"
-                "2. Use clean bullet points and bold highlights for key facts.\n"
-                "3. Cite specific equipment tags, dates, and regulatory clauses directly from the workspace documents.\n"
-                "4. Be articulate, genuine, and helpful without unnecessary filler text."
-            )
+        # 3. Enterprise Expert System Prompt
+        system_instruction = (
+            "You are KnowledgeBrain AI, an authoritative Senior Industrial Intelligence Specialist and Systems Architect.\n\n"
+            "OPERATING INSTRUCTIONS:\n"
+            "1. CONVERSATIONAL EXCELLENCE: Respond with high intelligence, clarity, and professionalism (like ChatGPT and Gemini Pro).\n"
+            "2. CONTEXTUAL REASONING: Analyze the user query against the uploaded documents. If the user asks about the latest uploaded document, focus on that file. If they ask a general repository question (e.g., 'How many reports do I have?'), give an accurate counting overview of all workspace files. If they ask to compare reports, analyze similarities across files.\n"
+            "3. FACTUAL CITATIONS: Cite exact document titles, equipment tags (e.g. HT-3, RC-1, F-101), dates, root causes, and regulatory clauses directly from the text.\n"
+            "4. NO SYNTHETIC FALLBACKS: Give thorough, genuine, and highly helpful responses grounded strictly in the provided text."
+        )
 
         prompt = (
-            f"=== WORKSPACE DOCUMENTS ({len(docs)} Files Total) ===\n{workspace_str}\n\n"
-            f"=== SAFETY PATTERNS ===\n{pattern_str}\n\n"
-            f"=== DIALOGUE HISTORY ===\n{history_str}\n\n"
+            f"=== WORKSPACE DOCUMENTS REPOSITORY ({len(docs)} Files Ingested) ===\n{workspace_str}\n\n"
+            f"=== DETECTED SAFETY PATTERNS ===\n{pattern_str}\n\n"
+            f"=== RECENT DIALOGUE HISTORY ===\n{history_str}\n\n"
             f"USER QUERY: {question}\n\n"
-            "Provide an accurate, genuine response tailored specifically to the requested depth."
+            "Provide a factual, articulate, genuine, and highly insightful response."
         )
 
         response_text = await GeminiLLMService.generate_text(prompt, system_instruction)
@@ -100,12 +81,12 @@ class CopilotAgent:
     def _generate_follow_ups(question: str, docs: List[Dict[str, Any]]) -> List[str]:
         if len(docs) > 1:
             return [
-                "Elaborate in full detail on this file.",
-                "Compare all uploaded reports.",
-                "What regulatory clauses apply?"
+                f"Summarize all {len(docs)} uploaded documents.",
+                "Compare common root causes across reports.",
+                "What regulatory standards apply to these reports?"
             ]
         return [
-            "Elaborate in full detail on this file.",
-            "Summarize root causes cleanly.",
-            "What regulatory clauses apply?"
+            "Summarize the key root causes of this report.",
+            "What regulatory standards apply to this file?",
+            "Show equipment tags extracted."
         ]
