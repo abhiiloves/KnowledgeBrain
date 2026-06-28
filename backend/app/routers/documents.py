@@ -7,6 +7,9 @@ from app.database import DatabaseManager
 router = APIRouter(prefix="/documents", tags=["documents"])
 
 @router.post("/upload")
+@router.post("/upload/")
+@router.post("")
+@router.post("/")
 async def upload_document(file: UploadFile = File(...)):
     if not file:
         raise HTTPException(status_code=400, detail="No file uploaded")
@@ -20,6 +23,7 @@ async def upload_document(file: UploadFile = File(...)):
     return {"status": "success", "document": saved_doc}
 
 @router.get("", response_model=List[Dict[str, Any]])
+@router.get("/", response_model=List[Dict[str, Any]])
 async def get_documents():
     return DatabaseManager.get_all_documents()
 

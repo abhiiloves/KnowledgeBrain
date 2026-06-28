@@ -18,13 +18,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API Routers under /api/v1
+# Include API Routers under both /api/v1 AND root for maximum client compatibility
 app.include_router(documents.router, prefix=settings.API_V1_STR)
+app.include_router(documents.router)
+
 app.include_router(patterns.router, prefix=settings.API_V1_STR)
+app.include_router(patterns.router)
+
 app.include_router(copilot.router, prefix=settings.API_V1_STR)
+app.include_router(copilot.router)
+
 app.include_router(compliance.router, prefix=settings.API_V1_STR)
+app.include_router(compliance.router)
+
 app.include_router(dashboard.router, prefix=settings.API_V1_STR)
+app.include_router(dashboard.router)
+
 app.include_router(demo.router, prefix=settings.API_V1_STR)
+app.include_router(demo.router)
 
 @app.get("/")
 async def root():
