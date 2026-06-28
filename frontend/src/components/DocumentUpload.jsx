@@ -43,9 +43,12 @@ export default function DocumentUpload() {
         const result = await res.json();
         setLatestDoc(result.document);
         fetchDocuments();
+      } else {
+        alert(`Upload failed with status ${res.status}. Please check backend server.`);
       }
     } catch (err) {
       console.error('Upload failed:', err);
+      alert(`Upload connection failed: Unable to reach backend at ${API_BASE}`);
     } finally {
       setUploading(false);
     }

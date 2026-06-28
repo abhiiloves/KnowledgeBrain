@@ -50,9 +50,23 @@ export default function CopilotChat() {
       if (res.ok) {
         const assistantMsg = await res.json();
         setMessages((prev) => [...prev, assistantMsg]);
+      } else {
+        const errText = await res.text();
+        setMessages((prev) => [...prev, {
+          role: 'assistant',
+          content: `⚠️ Copilot Notice: Server returned error (${res.status}). Ensure backend is active. Details: ${errText.substring(0, 150)}`,
+          confidence: 50,
+          timestamp: new Date().toISOString()
+        }]);
       }
     } catch (err) {
       console.error('Query error:', err);
+      setMessages((prev) => [...prev, {
+        role: 'assistant',
+        content: `⚠️ Copilot Connection Notice: Could not connect to backend server at ${API_BASE}. Please verify your backend server is live on Render or localhost.`,
+        confidence: 0,
+        timestamp: new Date().toISOString()
+      }]);
     } finally {
       setLoading(false);
     }

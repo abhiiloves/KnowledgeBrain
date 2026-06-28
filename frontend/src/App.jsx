@@ -182,7 +182,24 @@ export default function App() {
         </div>
 
         {/* Footer info & reset */}
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '600', marginBottom: '0.3rem' }}>ACTIVE BACKEND API:</div>
+            <div style={{ fontSize: '0.75rem', color: '#06b6d4', wordBreak: 'break-all', marginBottom: '0.4rem' }}>{API_BASE}</div>
+            <button
+              onClick={() => {
+                const customUrl = prompt('Enter your live Render Backend URL (e.g. https://your-app.onrender.com/api/v1):', API_BASE);
+                if (customUrl) {
+                  localStorage.setItem('KNOWLEDGEBRAIN_API_URL', customUrl);
+                  window.location.reload();
+                }
+              }}
+              style={{ background: 'transparent', border: 'none', color: '#a5b4fc', fontSize: '0.7rem', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+            >
+              ⚙️ Change API URL
+            </button>
+          </div>
+
           <button className="btn-secondary" style={{ width: '100%', justifyContent: 'center', fontSize: '0.8rem' }} onClick={handleReset}>
             <RotateCcw size={14} /> Reset Knowledgebase
           </button>
