@@ -1,0 +1,16 @@
+OISD CASE STUDY: OISD/CS/2024-25/P&E/11
+TITLE: Fatal Tube Stacking Accident during Pipe Rack Extension
+LOCATION: Offsites & Utilities Area, Pipe Yard 4
+DATE OF INCIDENT: 18th April 2024
+EQUIPMENT TAGS: H-201, Pipe Rack Yard, Crane-04
+
+DESCRIPTION OF INCIDENT:
+While transferring heavy alloy steel furnace replacement tubes from storage yard to site rigging deck, a stack of 12-inch diameter tubes rolled off the timber chocks, fatally crushing a mechanical technician.
+
+ROOT CAUSE ANALYSIS:
+1. Work Permit System Violation: Lifting and hoisting operations were executed without a valid Cold Work / Lifting Permit sign-off by the Rigging Supervisor (2nd occurrence of PTW non-compliance).
+2. Non-compliance with OISD-GDN-192 guidelines for securing heavy tubular materials.
+3. Lack of barricading and spotter presence during heavy load maneuver.
+
+REGULATORY BREACHES: OISD-STD-105 (Cl 6.3.1), OISD-GDN-192 (Cl 3.2), Factories Act 1948 Section 40.
+RECOMMENDATIONS: Conduct mandatory daily toolbox talks and forbid un-permitted lifting operations across all plant areas.

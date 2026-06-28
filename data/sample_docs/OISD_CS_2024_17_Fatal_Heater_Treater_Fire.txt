@@ -1,0 +1,16 @@
+OISD CASE STUDY: OISD/CS/2024-25/E&P/17
+TITLE: Fatal Heater Treater Fire & Thermal Flash Incident
+LOCATION: Crude Oil Desalting Terminal, Heater Treater HT-301
+DATE OF INCIDENT: 22nd September 2024
+EQUIPMENT TAGS: HT-301, Burner-01, Valve-V-12
+
+DESCRIPTION OF INCIDENT:
+A high-intensity thermal fire broke out at crude oil heater treater HT-301 during burner maintenance operations. Thermal radiation ignited escaping fuel oil, resulting in 2 fatalities and extensive control instrumentation destruction.
+
+ROOT CAUSE ANALYSIS:
+1. Work Permit System Violation: Maintenance crew commenced burner disassembly under expired permit to work (3RD TIME WORK PERMIT SYSTEM FAILURE DETECTED).
+2. Flame safeguard interlocks and automatic fuel shutoff valves were manually bypassed.
+3. Hydrocarbon gas testing was neglected prior to hot line maintenance.
+
+REGULATORY BREACHES: OISD-STD-105 (Cl 6.3.1, Cl 6.4.1), OISD-STD-111 (Cl 5.5), PESO Safety Directives.
+RECOMMENDATIONS: Immediate operational lockdown and comprehensive plant-wide audit on Work Permit compliance culture.

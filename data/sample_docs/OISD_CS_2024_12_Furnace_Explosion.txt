@@ -1,0 +1,16 @@
+OISD CASE STUDY: OISD/CS/2024-25/P&E/12
+TITLE: Furnace Explosion during Refinery Maintenance Turnaround
+LOCATION: Atmospheric Vacuum Distillation Unit (AVDU-2), Heater F-101
+DATE OF INCIDENT: 14th January 2024
+EQUIPMENT TAGS: F-101, E-102, TK-402, P-105A
+
+DESCRIPTION OF INCIDENT:
+During the scheduled turnaround maintenance of Furnace F-101, a catastrophic vapor cloud explosion occurred inside the combustion chamber upon relighting burner B-3. The flash fire caused severe structural displacement of furnace walls and structural collapse of radiant tube supports.
+
+ROOT CAUSE ANALYSIS:
+1. Work Permit System Violation: Hot work permit (PTW #8841) was issued without mandatory explosive hydrocarbon gas testing at elevation +12m per OISD-STD-105 Cl 6.3.1.
+2. Fuel gas blind isolation (LOTO) was not verified before permitting open flame ignition sources.
+3. Accumulated hydrocarbon vapors ignited upon manual spark igniter operation.
+
+REGULATORY BREACHES: OISD-STD-105 (Cl 6.3.1, Cl 6.4.1), OISD-STD-111 (Cl 4.2), PESO Act 1934.
+RECOMMENDATIONS: Enforce digital work permit verification with gas detector interlocks prior to ignition authorization.
