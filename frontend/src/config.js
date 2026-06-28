@@ -1,8 +1,8 @@
-// Intelligent API Base URL resolver with URL origin extraction
+// Intelligent API Base URL resolver with automatic Render production default
 const getApiBase = () => {
     let raw = '';
     
-    // 1. Check localStorage override
+    // 1. Check localStorage override (for manual testing if needed)
     const stored = localStorage.getItem('KNOWLEDGEBRAIN_API_URL');
     if (stored && stored.trim()) {
         raw = stored.trim();
@@ -11,7 +11,8 @@ const getApiBase = () => {
     } else if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
         return 'http://localhost:8000/api/v1';
     } else {
-        return '/api/v1';
+        // PERMANENT AUTOMATIC PRODUCTION DEFAULT (FOR HACKATHON JUDGES)
+        return 'https://knowledgebrain-backend.onrender.com/api/v1';
     }
 
     // Safely extract protocol + hostname (e.g. https://app.onrender.com)
@@ -23,7 +24,7 @@ const getApiBase = () => {
         return `${parsed.origin}/api/v1`;
     } catch (e) {
         console.error('URL parse error:', e);
-        return '/api/v1';
+        return 'https://knowledgebrain-backend.onrender.com/api/v1';
     }
 };
 
