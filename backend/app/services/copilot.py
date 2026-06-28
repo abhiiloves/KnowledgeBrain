@@ -10,13 +10,13 @@ class CopilotAgent:
         patterns = DatabaseManager.get_all_patterns()
         history = DatabaseManager.get_chat_history(session_id)
 
-        # 1. Build conversational history thread (like ChatGPT)
+        # 1. Build conversational history thread
         history_str = ""
         if history:
-            recent_turns = history[-6:]  # last 3 turns
+            recent_turns = history[-4:]
             history_str = "\n".join([f"{m.get('role').upper()}: {m.get('content')}" for m in recent_turns])
 
-        # 2. Build complete, transparent document workspace
+        # 2. Build complete document workspace
         doc_workspace_list = []
         referenced_docs = []
         for idx, d in enumerate(docs):
@@ -28,36 +28,33 @@ class CopilotAgent:
             doc_workspace_list.append(
                 f"=== DOCUMENT {idx+1}: {doc_title} {status_tag} ===\n"
                 f"Domain: {d.get('domain')}\n"
-                f"Upload Date: {d.get('upload_date', '')[:10]}\n"
-                f"Extracted Entities: {d.get('entities_json')}\n"
-                f"Document Content:\n{d.get('content_text')}"
+                f"Content:\n{d.get('content_text')}"
             )
 
         workspace_str = "\n\n".join(doc_workspace_list) if doc_workspace_list else "No documents uploaded in workspace yet."
-        pattern_str = "\n".join([f"Pattern Alert: {p.get('title')} ({p.get('severity')} - {p.get('occurrence_count')} incidents)" for p in patterns])
+        pattern_str = "\n".join([f"Pattern Alert: {p.get('title')} ({p.get('severity')})" for p in patterns])
 
-        # 3. ChatGPT / Gemini Custom GPT Style Master System Prompt
+        # 3. Short, Sharp & Crisp Master System Prompt
         system_instruction = (
-            "You are KnowledgeBrain AI, a state-of-the-art multimodal AI assistant designed with the exact conversational brilliance, fluidity, and intelligence of ChatGPT and Gemini Pro.\n\n"
-            "YOUR CORE OPERATING PRINCIPLES:\n"
-            "1. REASONING AUTONOMY: You have full visibility over the user's workspace documents. Use intelligent context awareness to understand what the user is asking. If they ask about a recently uploaded file, answer specifically about that file. If they ask a general question ('How many files do I have?'), give an accurate counting overview of all workspace files.\n"
-            "2. CONVERSATIONAL EXCELLENCE: Respond in a warm, natural, articulate, genuine, and highly insightful tone (like ChatGPT). Avoid rigid templates or robotic forced headers unless requested.\n"
-            "3. ACCURATE CITATIONS: Cite exact equipment tags, dates, root causes, and regulatory clauses directly from the documents.\n"
-            "4. CONTINUOUS THREAD: Pay attention to the conversation history to maintain smooth dialogue flow."
+            "You are KnowledgeBrain AI, a Senior Industrial Intelligence Specialist.\n\n"
+            "CRITICAL RESPONSE STYLE RULES (SHORT & CRISP):\n"
+            "1. SHORT & CRISP: Give direct, sharp, to-the-point, and highly accurate answers. Avoid long boring intros or unnecessary filler text.\n"
+            "2. CLEAR BULLET POINTS: Use short bullet points and bold highlights for readability.\n"
+            "3. ACCURATE CITATIONS: Cite exact equipment tags, dates, and regulatory clauses directly from the workspace documents.\n"
+            "4. WORKSPACE CONTEXT: Understand the user's intent cleanly and provide accurate facts."
         )
 
         prompt = (
             f"=== WORKSPACE DOCUMENTS ({len(docs)} Files Total) ===\n{workspace_str}\n\n"
-            f"=== DETECTED SAFETY PATTERNS ===\n{pattern_str}\n\n"
-            f"=== RECENT DIALOGUE HISTORY ===\n{history_str}\n\n"
+            f"=== SAFETY PATTERNS ===\n{pattern_str}\n\n"
+            f"=== DIALOGUE HISTORY ===\n{history_str}\n\n"
             f"USER QUERY: {question}\n\n"
-            "Provide a brilliant, natural, genuine, and articulate response."
+            "Provide a short, crisp, direct, and highly accurate response."
         )
 
         response_text = await GeminiLLMService.generate_text(prompt, system_instruction)
         follow_ups = CopilotAgent._generate_follow_ups(question, docs)
 
-        # Save user turn
         DatabaseManager.save_chat_message({
             "session_id": session_id,
             "role": "user",
@@ -65,7 +62,6 @@ class CopilotAgent:
             "timestamp": datetime.datetime.utcnow().isoformat()
         })
 
-        # Save assistant turn
         assistant_msg = {
             "session_id": session_id,
             "role": "assistant",
@@ -83,12 +79,12 @@ class CopilotAgent:
     def _generate_follow_ups(question: str, docs: List[Dict[str, Any]]) -> List[str]:
         if len(docs) > 1:
             return [
-                f"Summarize all {len(docs)} uploaded documents.",
-                "What are the recurring safety patterns across files?",
-                "What regulatory clauses apply to these reports?"
+                f"Summarize all {len(docs)} documents cleanly.",
+                "Which document has the highest damage?",
+                "What are the key regulatory breaches?"
             ]
         return [
-            "Summarize the key root causes of this report.",
-            "What regulatory standards apply to this file?",
-            "Show equipment tags extracted."
+            "Summarize root causes cleanly.",
+            "What regulatory clauses apply?",
+            "Show equipment tags."
         ]
