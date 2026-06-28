@@ -6,7 +6,10 @@ from pypdf import PdfReader
 import docx
 import openpyxl
 from PIL import Image
-import extract_msg
+try:
+    import extract_msg
+except ImportError:
+    extract_msg = None
 
 from app.services.llm import GeminiLLMService
 from app.database import DatabaseManager
@@ -35,8 +38,11 @@ class IngestionAgent:
                             sheets_text.append(row_str)
                 text_content = "\n".join(sheets_text)
             elif ext in ["msg", "eml"]:
-                msg = extract_msg.Message(io.BytesIO(file_bytes))
-                text_content = f"Subject: {msg.subject}\nFrom: {msg.sender}\nDate: {msg.date}\n\n{msg.body}"
+                if extract_msg:
+                    msg = extract_msg.Message(io.BytesIO(file_bytes))
+                    text_content = f"Subject: {msg.subject}\nFrom: {msg.sender}\nDate: {msg.date}\n\n{msg.body}"
+                else:
+                    text_content = file_bytes.decode("utf-8", errors="ignore")
             elif ext in ["png", "jpg", "jpeg"]:
                 # OCR placeholder / basic image info
                 img = Image.open(io.BytesIO(file_bytes))
